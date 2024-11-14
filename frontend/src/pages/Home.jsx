@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 import Navbar from '../components/navigation/Navbar';
 import Footer from '../components/navigation/Footer';
 
-const HomePage = ({ isAuthenticated = false }) => {
+const HomePage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth(); // Gunakan useAuth hook
 
   const handleStartClick = () => {
     if (isAuthenticated) {
@@ -16,15 +18,15 @@ const HomePage = ({ isAuthenticated = false }) => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar isAuthenticated={isAuthenticated} />
+      <Navbar isAuthenticated={isAuthenticated} /> {/* Pass isAuthenticated dari context */}
       
       <main className="flex-grow container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="md:w-1/2 space-y-6">
-            <h1 className="text-5xl md:text-6xl font-bold text-primary leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-[#5D1A16] leading-tight"> {/* Sesuaikan warna dengan tema */}
               Virtual Lab<br />Interaction
             </h1>
-            <p className="text-gray-700 italic">
+            <p className="text-[#5D1A16] italic"> {/* Sesuaikan warna dengan tema */}
               "Science is beautiful when it makes simple explanations of phenomena
               or connections between different observations. Examples include the
               double helix in biology and the fundamental equations of physics."
@@ -32,9 +34,9 @@ const HomePage = ({ isAuthenticated = false }) => {
             </p>
             <button
               onClick={handleStartClick}
-              className="btn-primary"
+              className="bg-[#E86F64] hover:bg-[#5D1A16] text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200" // Sesuaikan style dengan tema
             >
-              Let's Start
+              {isAuthenticated ? "Let's Start" : "Get Started"}
             </button>
           </div>
           <div className="md:w-1/2 flex justify-center mt-8 md:mt-0">
@@ -45,6 +47,18 @@ const HomePage = ({ isAuthenticated = false }) => {
             />
           </div>
         </div>
+
+        {/* Tambahkan welcome message jika user sudah login */}
+        {isAuthenticated && (
+          <div className="mt-8 p-4 bg-white rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold text-[#5D1A16]">
+              Welcome back, {user?.username}!
+            </h2>
+            <p className="text-gray-600 mt-2">
+              Continue your learning journey in our virtual lab.
+            </p>
+          </div>
+        )}
       </main>
 
       <Footer />

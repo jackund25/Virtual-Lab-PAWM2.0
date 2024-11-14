@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, User } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
+  const { handleLogin } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -14,7 +16,9 @@ const AuthPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const endpoint = isLogin ? 'http://127.0.0.1:8000/api/auth/login/' : 'http://127.0.0.1:8000/api/auth/register/';
+    const endpoint = isLogin 
+      ? 'http://127.0.0.1:8000/api/auth/login/' 
+      : 'http://127.0.0.1:8000/api/auth/register/';
     
     try {
       const response = await fetch(endpoint, {
@@ -29,10 +33,9 @@ const AuthPage = () => {
       });
       
       const data = await response.json();
-      console.log(response.ok)
       if (response.ok) {
-        localStorage.setItem('token', data.token);
-        navigate("/home")
+        handleLogin(data.user, data.token);
+        navigate("/");
       }
     } catch (error) {
       console.error('Auth error:', error);
