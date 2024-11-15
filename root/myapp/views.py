@@ -9,6 +9,8 @@ from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import ExperimentSession, SimulationState, ExperimentResult
 from .serializers import ExperimentSessionSerializer, SimulationStateSerializer, ExperimentResultSerializer
+from .models import Configuration
+from .serializers import ConfigurationSerializer
 
 @api_view(['POST'])
 def login(request):
@@ -59,6 +61,35 @@ def validate_token(request):
             'error': 'Invalid token'
         }, status=status.HTTP_401_UNAUTHORIZED)
     
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_configuration(request):
+        try:
+            config, created = Configuration.objects.update_or_create(
+                user=request.user,
+                simulation_type=request.data['simulation_type'],
+                defaults={'configuration': request.data['configuration']}
+            )
+            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_configuration(request, simulation_type):
+        try:
+            config = Configuration.objects.get(
+                user=request.user, 
+                simulation_type=simulation_type
+            )
+            return Response({
+                'configuration': config.configuration
+            }, status=status.HTTP_200_OK)
+        except Configuration.DoesNotExist:
+            return Response({
+                'configuration': None
+            }, status=status.HTTP_404_NOT_FOUND)    
+    
 class ExperimentSessionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ExperimentSessionSerializer
@@ -94,3 +125,4 @@ class ExperimentSessionViewSet(viewsets.ModelViewSet):
         )
         
         return Response(ExperimentResultSerializer(result).data)
+

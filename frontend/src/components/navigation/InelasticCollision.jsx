@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PauseCircle, PlayCircle, RotateCcw } from 'lucide-react';
+import { PauseCircle, PlayCircle, RotateCcw, SaveIcon } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 class Ball {
   constructor(x, y, mass, velocity, color) {
@@ -256,6 +257,56 @@ const InelasticCollision = () => {
     resetSimulation();
   }, [params]);
 
+  const { user } = useAuth();
+  const [saveStatus, setSaveStatus] = useState('');
+
+  const saveConfiguration = async () => {
+    if (!user) {
+      setSaveStatus('Please login to save configuration');
+      return;
+    }
+    try {
+      const response = await fetch('/api/save-configuration/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          simulation_type: 'inelastic',
+          configuration: params,
+        }),
+      });
+  
+      if (response.ok) {
+        setSaveStatus('Configuration saved successfully!');
+      } else {
+        setSaveStatus('Failed to save configuration');
+      }
+    } catch (error) {
+      setSaveStatus('Error saving configuration');
+    }
+  };
+
+  useEffect(() => {
+    const loadConfiguration = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await fetch(`/api/get-configuration/${user.id}/`);
+        const data = await response.json();
+        
+        if (response.ok && data.configuration) {
+          setParams(data.configuration);
+        }
+      } catch (error) {
+        console.error('Error loading configuration:', error);
+      }
+    };
+  
+    loadConfiguration();
+  }, [user]);
+
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden">
       <div className="bg-sky-100 p-4">
@@ -346,7 +397,24 @@ const InelasticCollision = () => {
               <RotateCcw className="w-4 h-4" />
               Reset
             </button>
+            {user && (
+              <button
+                onClick={saveConfiguration}
+                className="flex items-center gap-2 px-4 py-2 border border-sky-500 text-sky-500 rounded-lg hover:bg-sky-50 transition-colors"
+              >
+                <SaveIcon className="w-4 h-4" />
+                Save Config
+              </button>
+            )}
           </div>
+          {/* Add status message */}
+          {saveStatus && (
+            <div className={`text-center mt-2 ${
+              saveStatus.includes('success') ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {saveStatus}
+            </div>
+          )}
 
           <div className="border border-sky-200 rounded-lg p-4 bg-sky-50">
             <canvas

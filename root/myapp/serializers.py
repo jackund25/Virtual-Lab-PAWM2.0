@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import ExperimentSession, SimulationState, ExperimentResult
+from .models import Configuration
 
 User = get_user_model()
 
@@ -37,3 +38,8 @@ class ExperimentSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExperimentSession
         fields = ['id', 'created_at', 'updated_at', 'completed', 'states', 'results']
+
+class ConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Configuration
+        fields = ['configuration', 'simulation_type']

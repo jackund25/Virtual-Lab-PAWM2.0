@@ -47,3 +47,13 @@ class ExperimentResult(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     initial_params = models.JSONField()
     final_measurements = models.JSONField()
+
+class Configuration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    simulation_type = models.CharField(max_length=20)  # 'elastic' atau 'inelastic'
+    configuration = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'simulation_type']
