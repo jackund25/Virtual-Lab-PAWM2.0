@@ -5,7 +5,8 @@
     "use": "@vercel/python",
     "config": {
       "maxLambdaSize": "15mb",
-      "runtime": "python3.9"
+      "runtime": "python3.9",
+      "buildCommand": "pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt"
     }
   }],
   "routes": [
@@ -17,6 +18,5 @@
       "src": "/(.*)",
       "dest": "backend/wsgi.py"
     }
-  ],
-  "installCommand": "pip install -r requirements.txt"
+  ]
 }
