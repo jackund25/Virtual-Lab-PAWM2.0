@@ -14,13 +14,13 @@ const Footer = () => {
               <h2 className="text-white text-2xl font-bold mb-4">About us</h2>
               <div className="flex flex-col items-center md:items-start space-y-2">
                 <Link 
-                  to="/support" 
+                  to="/comingsoon" 
                   className="text-white hover:text-gray-200 transition-colors duration-300"
                 >
                   How it works
                 </Link>
                 <Link 
-                  to="/support" 
+                  to="/comingsoon" 
                   className="text-white hover:text-gray-200 transition-colors duration-300"
                 >
                   Testimonials

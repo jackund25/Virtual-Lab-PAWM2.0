@@ -2,9 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/Home';
 import AuthPage from './pages/Auth/AuthPage';
-// import ContentPage from './pages/Content'; // Import ContentPage jika sudah ada
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import Content from './pages/Content';
+import LabPage from './pages/Lab';
+import ComingSoonPage from './pages/ComingSoon';
 
 function App() {
   return (
@@ -16,14 +18,30 @@ function App() {
           <Route path="/login" element={<AuthPage />} />
 
           {/* Protected routes */}
-          {/* <Route
+          <Route
             path="/content"
             element={
               <ProtectedRoute>
-                <ContentPage />
+                <Content/>
               </ProtectedRoute>
             }
-          /> */}
+          />
+          <Route 
+            path="/lab" 
+            element={
+            <ProtectedRoute>
+              <LabPage />
+            </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/comingsoon" 
+            element={
+            <ProtectedRoute>
+              <ComingSoonPage />
+            </ProtectedRoute>
+            } 
+          />
 
           {/* 404 Route */}
           <Route 

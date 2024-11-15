@@ -59,7 +59,7 @@ const Navbar = () => {
                 alt="Let's Physics Logo" 
                 className="h-10 w-10"
               />
-              <span className="text-xl font-bold text-gray-800">Let's Physics</span>
+              <span className="text-xl font-bold text-[#5D1A16]">Let's Physics</span>
             </div>
 
             {/* Hamburger Menu Button */}
@@ -132,7 +132,7 @@ const Navbar = () => {
                   onClick={() => navigate('/login')}
                   className="btn-secondary"
                 >
-                  Get Started
+                  Sign In
                 </button>
               )}
             </div>
