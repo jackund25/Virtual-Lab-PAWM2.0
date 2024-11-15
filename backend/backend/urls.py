@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('myapp.urls')),
+    path('api/auth/', include('myapp.urls')),  # Untuk endpoint autentikasi
+    path('api/momentum/', include('myapp.experiment_urls')),  # Untuk endpoint eksperimen
 ]

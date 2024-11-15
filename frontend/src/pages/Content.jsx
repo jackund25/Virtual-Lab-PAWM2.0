@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Navbar from '../components/navigation/Navbar';
 import Footer from '../components/navigation/Footer';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const contentData = [
   {
@@ -51,24 +52,54 @@ const contentData = [
 
 const Content = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const cardsToShow = 4;
+  const [cardsToShow, setCardsToShow] = useState(4);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setCardsToShow(1);
+      } else if (window.innerWidth < 768) {
+        setCardsToShow(2);
+      } else if (window.innerWidth < 1024) {
+        setCardsToShow(3);
+      } else {
+        setCardsToShow(4);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleNext = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex + 1 >= contentData.length - cardsToShow ? 0 : prevIndex + 1
-    );
+    setCurrentIndex((prevIndex) => {
+      // Hanya bergerak satu card ke depan
+      const nextIndex = prevIndex + 1;
+      // Kembali ke awal jika mencapai akhir
+      return nextIndex >= contentData.length ? 0 : nextIndex;
+    });
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex - 1 < 0 ? contentData.length - cardsToShow : prevIndex - 1
-    );
+    setCurrentIndex((prevIndex) => {
+      // Hanya bergerak satu card ke belakang
+      const prevIdx = prevIndex - 1;
+      // Pindah ke card terakhir jika di awal
+      return prevIdx < 0 ? contentData.length - 1 : prevIdx;
+    });
   };
+
+  // Hitung total width yang dibutuhkan
+  const totalWidth = (100 * contentData.length) / cardsToShow;
+  // Hitung width per card
+  const cardWidth = 100 / contentData.length;
+  // Hitung translateX per card
+  const translateX = (currentIndex * cardWidth);
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar/>
-      {/* Content Carousel */}
+      <Navbar />
       <div className="container mx-auto px-4 py-12">
         <div className="relative">
           <button 
@@ -81,12 +112,16 @@ const Content = () => {
           <div className="overflow-hidden">
             <div 
               className="flex transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${currentIndex * (100 / cardsToShow)}%)` }}
+              style={{ 
+                transform: `translateX(-${translateX}%)`,
+                width: `${totalWidth}%`
+              }}
             >
               {contentData.map((item) => (
                 <div 
                   key={item.id}
-                  className="w-full md:w-1/4 flex-shrink-0 px-4"
+                  style={{ width: `${cardWidth}%` }}
+                  className="px-2 sm:px-4"
                 >
                   <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                     <img 
@@ -118,7 +153,7 @@ const Content = () => {
           </button>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </div>
   );
 };

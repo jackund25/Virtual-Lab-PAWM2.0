@@ -92,7 +92,7 @@ const Navbar = () => {
                 Home
               </button>
               <button 
-                onClick={() => navigate('/about')}
+                onClick={() => navigate('/comingsoon')}
                 className="nav-link"
               >
                 About us

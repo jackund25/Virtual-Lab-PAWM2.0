@@ -2,9 +2,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer
+from .models import ExperimentSession, SimulationState, ExperimentResult
+from .serializers import ExperimentSessionSerializer, SimulationStateSerializer, ExperimentResultSerializer
 
 @api_view(['POST'])
 def login(request):
@@ -54,3 +58,39 @@ def validate_token(request):
         return Response({
             'error': 'Invalid token'
         }, status=status.HTTP_401_UNAUTHORIZED)
+    
+class ExperimentSessionViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ExperimentSessionSerializer
+
+    def get_queryset(self):
+        return ExperimentSession.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def save_state(self, request, pk=None):
+        session = self.get_object()
+        state_data = request.data.get('state', {})
+        
+        state = SimulationState.objects.create(
+            session=session,
+            active_tab=state_data.get('activeTab'),
+            elastic_state=state_data.get('elasticState', {}),
+            inelastic_state=state_data.get('inelasticState', {})
+        )
+        
+        return Response(SimulationStateSerializer(state).data)
+
+    @action(detail=True, methods=['post'])
+    def submit_result(self, request, pk=None):
+        session = self.get_object()
+        result = ExperimentResult.objects.create(
+            session=session,
+            experiment_type=request.data.get('experiment_type'),
+            initial_params=request.data.get('initial_params', {}),
+            final_measurements=request.data.get('final_measurements', {})
+        )
+        
+        return Response(ExperimentResultSerializer(result).data)
