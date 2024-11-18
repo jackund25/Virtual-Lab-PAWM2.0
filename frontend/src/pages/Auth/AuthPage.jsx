@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { BASE_URL } from '../../config/config';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -13,12 +14,15 @@ const AuthPage = () => {
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    
     const endpoint = isLogin 
-      ? 'http://127.0.0.1:8000/api/auth/login/' 
-      : 'http://127.0.0.1:8000/api/auth/register/';
+      ? `${BASE_URL}/api/auth/login/`
+      : `${BASE_URL}/api/auth/register/`;
     
     try {
       const response = await fetch(endpoint, {
@@ -33,12 +37,16 @@ const AuthPage = () => {
       });
       
       const data = await response.json();
+      
       if (response.ok) {
-        handleLogin(data.user, data.token);
+        await handleLogin(data.user, data.token);
         navigate("/");
+      } else {
+        setError(data.error || 'An error occurred');
       }
     } catch (error) {
       console.error('Auth error:', error);
+      setError('Network error occurred');
     }
   };
 

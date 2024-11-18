@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PauseCircle, PlayCircle, RotateCcw, SaveIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { BASE_URL } from '../../config/config';
 
 class Ball {
   constructor(x, y, mass, velocity, color) {
@@ -240,23 +241,18 @@ const ElasticCollision = () => {
     resetSimulation();
   }, [params]);
 
-  const { user } = useAuth();
+  const { authFetch, user } = useAuth();
   const [saveStatus, setSaveStatus] = useState('');
 
   const saveConfiguration = async () => {
-    if (!user) {
-      setSaveStatus('Please login to save configuration');
-      return;
-    }
     try {
-      const response = await fetch('/api/save-configuration/', {
+      const response = await authFetch(`${BASE_URL}/api/save-configuration/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user.id,
-          simulation_type: 'elastic', // or 'inelastic' for InelasticCollision
+          simulation_type: 'elastic',
           configuration: params,
         }),
       });
@@ -264,19 +260,19 @@ const ElasticCollision = () => {
       if (response.ok) {
         setSaveStatus('Configuration saved successfully!');
       } else {
-        setSaveStatus('Failed to save configuration');
+        const data = await response.json();
+        setSaveStatus(data.error || 'Failed to save configuration');
       }
     } catch (error) {
       setSaveStatus('Error saving configuration');
+      console.error('Save error:', error);
     }
   };
 
   useEffect(() => {
     const loadConfiguration = async () => {
-      if (!user) return;
-      
       try {
-        const response = await fetch(`/api/get-configuration/${user.id}/`);
+        const response = await authFetch(`${BASE_URL}/api/get-configuration/elastic/`);
         const data = await response.json();
         
         if (response.ok && data.configuration) {
@@ -288,7 +284,7 @@ const ElasticCollision = () => {
     };
   
     loadConfiguration();
-  }, [user]);
+  }, [authFetch]);
 
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden">

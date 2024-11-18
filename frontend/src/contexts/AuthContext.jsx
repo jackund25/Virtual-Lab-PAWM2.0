@@ -1,174 +1,57 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { BASE_URL } from '../config/config';  // Pastikan path sesuai
 
 const AuthContext = createContext(null);
-const BASE_URL = 'http://127.0.0.1:8000';
-
-// Konfigurasi API untuk eksperimen momentum
-const momentumApi = {
-  saveState: async (sessionId, state, token) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/momentum/experiments/${sessionId}/save_state/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
-        },
-        body: JSON.stringify({ state })
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Error saving state:', error);
-      throw error;
-    }
-  },
-
-  initializeSession: async (token) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/momentum/experiments/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
-        }
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Error initializing session:', error);
-      throw error;
-    }
-  },
-
-  submitResults: async (sessionId, type, results, token) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/momentum/experiments/${sessionId}/submit_result/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
-        },
-        body: JSON.stringify({
-          experiment_type: type,
-          ...results
-        })
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Error submitting results:', error);
-      throw error;
-    }
-  }
-};
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [experimentSession, setExperimentSession] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Tambahkan loading state
-  const [labState, setLabState] = useState({
-    activeTab: 'elastic',
-    elasticState: {
-      params: {
-        mass1: 0.5,
-        velocity1: 1.0,
-        mass2: 1.5,
-        velocity2: -0.5
-      },
-      measurements: {
-        momentum1: 0,
-        momentum2: 0,
-        energy: 0
-      }
-    },
-    inelasticState: {
-      params: {
-        mass1: 0.5,
-        velocity1: 1.0,
-        mass2: 1.5,
-        velocity2: -0.5
-      },
-      measurements: {
-        momentum1: 0,
-        momentum2: 0,
-        energy: 0,
-        energyLoss: 0
-      }
-    }
-  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  const validateToken = async (tokenToValidate) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/validate-token/`, {
-        headers: {
-          'Authorization': `Token ${tokenToValidate}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setIsAuthenticated(true);
-        
-        // Initialize experiment session after validating token
-        await initializeExperimentSession(tokenToValidate);
-        return true;
-      } else {
-        await handleLogout();
-        return false;
-      }
-    } catch (error) {
-      console.error('Token validation error:', error);
-      await handleLogout();
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Check token saat aplikasi dimuat
+  // Validasi token setiap kali component di-mount atau token berubah
   useEffect(() => {
-    const initAuth = async () => {
+    const validateToken = async () => {
       const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        await validateToken(storedToken);
-      } else {
+      if (!storedToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BASE_URL}/api/auth/validate-token/`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Token ${storedToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+          setIsAuthenticated(true);
+          setToken(storedToken);
+        } else {
+          // Token tidak valid, hapus dari localStorage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setIsAuthenticated(false);
+          setUser(null);
+          setToken(null);
+        }
+      } catch (error) {
+        console.error('Token validation error:', error);
+        setIsAuthenticated(false);
+        setUser(null);
+        setToken(null);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    initAuth();
-  }, []);
-
-  // Auto-save tetap sama
-  useEffect(() => {
-    if (experimentSession && token) {
-      const saveInterval = setInterval(() => {
-        momentumApi.saveState(experimentSession.id, labState, token)
-          .catch(console.error);
-      }, 30000);
-
-      return () => clearInterval(saveInterval);
-    }
-  }, [experimentSession, labState, token]);
-
-  const initializeExperimentSession = async (authToken) => {
-    try {
-      const session = await momentumApi.initializeSession(authToken);
-      setExperimentSession(session);
-      
-      // Load saved state if exists
-      if (session.states?.length > 0) {
-        const lastState = session.states[0];
-        setLabState({
-          activeTab: lastState.active_tab,
-          elasticState: lastState.elastic_state,
-          inelasticState: lastState.inelastic_state
-        });
-      }
-    } catch (error) {
-      console.error('Error initializing experiment session:', error);
-    }
-  };
+    validateToken();
+  }, [token]); // Dependency array dengan token
 
   const handleLogin = async (userData, authToken) => {
     setIsLoading(true);
@@ -178,9 +61,9 @@ export const AuthProvider = ({ children }) => {
       setToken(authToken);
       setUser(userData);
       setIsAuthenticated(true);
-      
-      // Initialize experiment session after login
-      await initializeExperimentSession(authToken);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -198,8 +81,8 @@ export const AuthProvider = ({ children }) => {
           },
         });
 
-        if (response.ok) {
-          console.log('Logout successful');
+        if (!response.ok) {
+          console.error('Logout failed:', await response.text());
         }
       }
     } catch (error) {
@@ -210,34 +93,26 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
-      setExperimentSession(null);
-      setLabState(null);
       setIsLoading(false);
     }
   };
 
-  const updateUser = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
-
-  // Fungsi untuk momentum lab
-  const saveExperimentState = async (state) => {
-    if (!experimentSession || !token) return;
-    try {
-      await momentumApi.saveState(experimentSession.id, state, token);
-    } catch (error) {
-      console.error('Error saving experiment state:', error);
+  // Menambahkan interceptor untuk request
+  const authFetch = async (url, options = {}) => {
+    if (token) {
+      options.headers = {
+        ...options.headers,
+        'Authorization': `Token ${token}`,
+      };
     }
-  };
-
-  const submitExperimentResults = async (type, results) => {
-    if (!experimentSession || !token) return;
-    try {
-      await momentumApi.submitResults(experimentSession.id, type, results, token);
-    } catch (error) {
-      console.error('Error submitting experiment results:', error);
+    
+    const response = await fetch(url, options);
+    if (response.status === 401) {
+      // Token expired atau tidak valid
+      await handleLogout();
+      throw new Error('Unauthorized');
     }
+    return response;
   };
 
   const value = {
@@ -247,16 +122,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     handleLogin,
     handleLogout,
-    updateUser,
-    setUser,
-    setIsAuthenticated,
-    validateToken,
-    // Momentum lab state dan functions
-    labState,
-    setLabState,
-    saveExperimentState,
-    submitExperimentResults,
-    experimentSession
+    authFetch, // Tambahkan authFetch ke context
   };
 
   return (
