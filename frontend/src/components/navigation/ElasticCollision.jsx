@@ -243,10 +243,14 @@ const ElasticCollision = () => {
 
   const { authFetch, user } = useAuth();
   const [saveStatus, setSaveStatus] = useState('');
-
   const saveConfiguration = async () => {
+    if (!user) {
+      setSaveStatus('Please login to save configuration');
+      return;
+    }
+    
     try {
-      const response = await authFetch(`${BASE_URL}/api/save-configuration/`, {
+      const response = await authFetch(`${BASE_URL}/save-configuration/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -256,35 +260,68 @@ const ElasticCollision = () => {
           configuration: params,
         }),
       });
-  
+
+      console.log('Save Response status:', response.status);
+      const responseText = await response.text();
+      console.log('Save Response text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse save response as JSON:', e);
+        setSaveStatus('Server error: Invalid response format');
+        return;
+      }
+
       if (response.ok) {
         setSaveStatus('Configuration saved successfully!');
+        setTimeout(() => setSaveStatus(''), 3000);
       } else {
-        const data = await response.json();
         setSaveStatus(data.error || 'Failed to save configuration');
       }
     } catch (error) {
-      setSaveStatus('Error saving configuration');
       console.error('Save error:', error);
+      setSaveStatus('Error saving configuration');
     }
   };
 
+  // useEffect untuk load configuration
   useEffect(() => {
     const loadConfiguration = async () => {
+      if (!user) return;
+
       try {
-        const response = await authFetch(`${BASE_URL}/api/get-configuration/elastic/`);
-        const data = await response.json();
+        console.log('Fetching configuration from:', `${BASE_URL}/get-configuration/elastic/`); // Debug URL
+        const response = await authFetch(`${BASE_URL}/get-configuration/elastic/`);
         
+        console.log('Load Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Load Response text:', responseText);
+
+        // Coba parse response sebagai JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse load response as JSON:', e);
+          console.error('Response text was:', responseText);
+          return;
+        }
+
         if (response.ok && data.configuration) {
+          console.log('Setting params to:', data.configuration);
           setParams(data.configuration);
+        } else {
+          console.log('No configuration found or error:', data);
         }
       } catch (error) {
-        console.error('Error loading configuration:', error);
+        console.error('Load error details:', error);
       }
     };
-  
+
     loadConfiguration();
-  }, [authFetch]);
+  }, [user, authFetch]);
 
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden">

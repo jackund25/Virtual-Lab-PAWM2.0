@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { BASE_URL } from '../config/config';  // Pastikan path sesuai
+import { BASE_URL } from '../config/config';
 
 const AuthContext = createContext(null);
 
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     handleLogin,
     handleLogout,
-    authFetch, // Tambahkan authFetch ke context
+    authFetch,
   };
 
   return (

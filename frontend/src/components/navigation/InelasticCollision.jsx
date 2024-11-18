@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { PauseCircle, PlayCircle, RotateCcw, SaveIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { BASE_URL } from '../../config/config';
 
 class Ball {
   constructor(x, y, mass, velocity, color) {
@@ -257,56 +258,89 @@ const InelasticCollision = () => {
     resetSimulation();
   }, [params]);
 
-  const { user } = useAuth();
+  const { authFetch, user } = useAuth();
   const [saveStatus, setSaveStatus] = useState('');
-
   const saveConfiguration = async () => {
     if (!user) {
       setSaveStatus('Please login to save configuration');
       return;
     }
+    
     try {
-      const response = await fetch('/api/save-configuration/', {
+      const response = await authFetch(`${BASE_URL}/save-configuration/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user.id,
           simulation_type: 'inelastic',
           configuration: params,
         }),
       });
-  
+
+      console.log('Save Response status:', response.status);
+      const responseText = await response.text();
+      console.log('Save Response text:', responseText);
+
+      // Coba parse response sebagai JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse save response as JSON:', e);
+        setSaveStatus('Server error: Invalid response format');
+        return;
+      }
+
       if (response.ok) {
         setSaveStatus('Configuration saved successfully!');
+        setTimeout(() => setSaveStatus(''), 3000);
       } else {
-        setSaveStatus('Failed to save configuration');
+        setSaveStatus(data.error || 'Failed to save configuration');
       }
     } catch (error) {
+      console.error('Save error:', error);
       setSaveStatus('Error saving configuration');
     }
   };
 
+  // useEffect untuk load configuration
   useEffect(() => {
     const loadConfiguration = async () => {
       if (!user) return;
-      
+
       try {
-        const response = await fetch(`/api/get-configuration/${user.id}/`);
-        const data = await response.json();
+        console.log('Fetching configuration from:', `${BASE_URL}/get-configuration/inelastic/`);
+        const response = await authFetch(`${BASE_URL}/get-configuration/inelastic/`);
         
+        console.log('Load Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Load Response text:', responseText);
+
+        // Coba parse response sebagai JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse load response as JSON:', e);
+          console.error('Response text was:', responseText);
+          return;
+        }
+
         if (response.ok && data.configuration) {
+          console.log('Setting params to:', data.configuration);
           setParams(data.configuration);
+        } else {
+          console.log('No configuration found or error:', data);
         }
       } catch (error) {
-        console.error('Error loading configuration:', error);
+        console.error('Load error details:', error);
       }
     };
-  
-    loadConfiguration();
-  }, [user]);
 
+    loadConfiguration();
+  }, [user, authFetch]);
+  
   return (
     <div className="bg-white shadow-lg rounded-xl overflow-hidden">
       <div className="bg-sky-100 p-4">

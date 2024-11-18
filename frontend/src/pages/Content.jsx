@@ -90,12 +90,9 @@ const Content = () => {
     });
   };
 
-  // Hitung total width yang dibutuhkan
-  const totalWidth = (100 * contentData.length) / cardsToShow;
-  // Hitung width per card
-  const cardWidth = 100 / contentData.length;
-  // Hitung translateX per card
-  const translateX = (currentIndex * cardWidth);
+  const totalWidth = (100 * contentData.length) / cardsToShow; // Menghitung total width yang dibutuhkan
+  const cardWidth = 100 / contentData.length;   // Menghitung width per card
+  const translateX = (currentIndex * cardWidth);   // Menghitung translateX per card
 
   return (
     <div className="min-h-screen bg-white">

@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/navigation/Navbar';
 import Footer from '../components/navigation/Footer';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth(); // Gunakan useAuth hook
+  const { isAuthenticated, user } = useAuth();
 
   const handleStartClick = () => {
     if (isAuthenticated) {
@@ -23,10 +23,10 @@ const HomePage = () => {
       <main className="flex-grow container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="md:w-1/2 space-y-6">
-            <h1 className="text-5xl md:text-6xl font-bold text-[#5D1A16] leading-tight"> {/* Sesuaikan warna dengan tema */}
+            <h1 className="text-5xl md:text-6xl font-bold text-[#5D1A16] leading-tight">
               Virtual Lab<br />Interaction
             </h1>
-            <p className="text-[#5D1A16] italic"> {/* Sesuaikan warna dengan tema */}
+            <p className="text-[#5D1A16] italic">
               "Science is beautiful when it makes simple explanations of phenomena
               or connections between different observations. Examples include the
               double helix in biology and the fundamental equations of physics."
@@ -48,7 +48,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Tambahkan welcome message jika user sudah login */}
+        {/* Welcome message jika user sudah login */}
         {isAuthenticated && (
           <div className="mt-8 p-4 bg-white rounded-lg shadow-md">
             <h2 className="text-2xl font-bold text-[#5D1A16]">
